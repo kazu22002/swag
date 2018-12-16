@@ -15,11 +15,18 @@ import (
 
 // Gen presents a generate tool for swag.
 type Gen struct {
+	ParseFile string
+	PathDir string
 }
 
 // New creates a new Gen.
 func New() *Gen {
-	return &Gen{}
+	return &Gen{ParseFile:"", PathDir:""}
+}
+
+func (g *Gen) SetParseDir( pathDir string , file string){
+	g.PathDir = pathDir
+	g.ParseFile = file
 }
 
 // Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
@@ -27,7 +34,9 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 	log.Println("Generate swagger docs....")
 	p := swag.New()
 	p.PropNamingStrategy = propNamingStrategy
-	p.ParseAPI(searchDir, mainAPIFile)
+	_ = p.ParseAPI(searchDir, mainAPIFile)
+	p.SpecificationDir = g.PathDir
+	p.SpecificationFile = g.ParseFile
 	swagger := p.GetSwagger()
 
 	b, err := json.MarshalIndent(swagger, "", "    ")

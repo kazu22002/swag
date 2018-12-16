@@ -24,13 +24,19 @@ func main() {
 				mainAPIFile := c.String("generalInfo")
 				swaggerConfDir := c.String("swagger")
 				strategy := c.String("propertyStrategy")
+				file := c.String("file")
+				pathDir := c.String("pathDir")
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
 				default:
 					return errors.Errorf("not supported %s propertyStrategy", strategy)
 				}
 
-				gen.New().Build(dir, mainAPIFile, swaggerConfDir, strategy)
+				g := gen.New()
+				if file != "" && pathDir != ""{
+					g.SetParseDir(pathDir, file)
+				}
+				_ = g.Build(dir, mainAPIFile, swaggerConfDir, strategy)
 				return nil
 			},
 			Flags: []cli.Flag{
@@ -53,6 +59,16 @@ func main() {
 					Name:  "propertyStrategy, p",
 					Value: "camelcase",
 					Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
+				},
+				cli.StringFlag{
+					Name:  "file, f",
+					Value: "",
+					Usage: "parse file set",
+				},
+				cli.StringFlag{
+					Name:  "pathDir, pd",
+					Value: "",
+					Usage: "paths only directory , directory set",
 				},
 			},
 		},

@@ -53,6 +53,9 @@ type Parser struct {
 
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
+
+	SpecificationDir  string
+	SpecificationFile string
 }
 
 // New creates a new Parser with default properties.
@@ -130,7 +133,10 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@title":
 					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
 				case "@description":
-					parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					if parser.swagger.Info.Description == "{{.Description}}" {
+						parser.swagger.Info.Description = ""
+					}
+					parser.swagger.Info.Description += strings.TrimSpace(commentLine[len(attribute):])
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
@@ -293,6 +299,28 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						securityScheme.AddScope(scope, description)
 					}
 					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = securityScheme
+				case "@securitydefinitions.jwt":
+					attrMap := map[string]string{}
+					for _, v := range comments[i+1:] {
+						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+						if securityAttr == "@in" || securityAttr == "@name" {
+							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+						}
+						// next securityDefinitions
+						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+							break
+						}
+					}
+					if len(attrMap) != 2 {
+						log.Panic("@securitydefinitions.jwt is @name and @in required")
+					}
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] =
+						&spec.SecurityScheme{SecuritySchemeProps: spec.SecuritySchemeProps{
+							Type:        "apiKey",
+							Name:        attrMap["@name"],
+							In:          attrMap["@in"],
+							Description: "Bearer {token}",
+						}}
 				}
 			}
 		}
@@ -993,7 +1021,20 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 			log.Panicf("ParseFile panic:%+v", err)
 		}
 
-		parser.files[path] = astFile
+		if parser.SpecificationFile != "" {
+			dir, _ := filepath.Split(path)
+			if strings.Trim(dir, "/") == strings.Trim(parser.SpecificationDir, "/") {
+				if path == parser.SpecificationFile {
+					parser.files[path] = astFile
+				}
+				return nil
+			}
+
+			parser.files[path] = astFile
+
+		} else {
+			parser.files[path] = astFile
+		}
 	}
 	return nil
 }

@@ -1,5 +1,9 @@
 # swag
 
+```shell
+ swag i -g main_admin.go -pd interfaces/controllers -f interfaces/controllers/serviceControllerController.go 
+```
+
 <p align="center">
     <img alt="swaggo" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png" width="200">
 </p>
