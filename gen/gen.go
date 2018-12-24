@@ -16,15 +16,15 @@ import (
 // Gen presents a generate tool for swag.
 type Gen struct {
 	ParseFile string
-	PathDir string
+	PathDir   string
 }
 
 // New creates a new Gen.
 func New() *Gen {
-	return &Gen{ParseFile:"", PathDir:""}
+	return &Gen{ParseFile: "", PathDir: ""}
 }
 
-func (g *Gen) SetParseDir( pathDir string , file string){
+func (g *Gen) SetParseDir(pathDir string, file string) {
 	g.PathDir = pathDir
 	g.ParseFile = file
 }
@@ -72,6 +72,18 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 	}
 
 	swaggerYAML.Write(y)
+
+	swaggerModelJSON, err := os.Create(path.Join(swaggerConfDir, "swagger_model.json"))
+	if err != nil {
+		return err
+	}
+	defer swaggerModelJSON.Close()
+	modelJson, err := json.MarshalIndent(p.TypeDefinitionsField, "", "    ")
+	if err != nil {
+		return err
+	}
+	swaggerModelJSON.Write(modelJson)
+
 
 	if err := packageTemplate.Execute(docs, struct {
 		Timestamp time.Time

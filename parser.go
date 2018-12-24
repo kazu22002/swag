@@ -56,6 +56,9 @@ type Parser struct {
 
 	SpecificationDir  string
 	SpecificationFile string
+
+	TypeDefinitionsField map[string][]string
+
 }
 
 // New creates a new Parser with default properties.
@@ -79,6 +82,8 @@ func New() *Parser {
 		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
+		TypeDefinitionsField:        make(map[string][]string),
+
 	}
 	return parser
 }
@@ -510,6 +515,8 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr,
 			return schema
 		}
 
+		parser.TypeDefinitionsField[pkgName + "." + typeName] = []string{}
+
 		properties := make(map[string]spec.Schema)
 		for _, field := range expr.Fields.List {
 			var fieldProps map[string]spec.Schema
@@ -521,6 +528,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr,
 
 			for k, v := range fieldProps {
 				properties[k] = v
+				parser.TypeDefinitionsField[pkgName+ "." + typeName] = append(parser.TypeDefinitionsField[pkgName+ "." + typeName], k)
 			}
 		}
 
