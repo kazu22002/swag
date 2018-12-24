@@ -610,6 +610,8 @@ type structField struct {
 	minLength    *int64
 	enums        []interface{}
 	defaultValue interface{}
+	description  string
+
 }
 
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
@@ -619,8 +621,8 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 		return
 	}
 	var desc string
-	if field.Doc != nil {
-		desc = strings.TrimSpace(field.Doc.Text())
+	if structField.description != "" {
+		desc = strings.TrimSpace(structField.description)
 	}
 	// TODO: find package of schemaType and/or arrayType
 
@@ -900,7 +902,10 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		structField.maxLength = getIntTag(structTag, "maxLength")
 		structField.minLength = getIntTag(structTag, "minLength")
 	}
-
+	// custom add
+	if descriptionTag := structTag.Get("description"); descriptionTag != "" {
+		structField.description = descriptionTag
+	}
 	return structField
 }
 
